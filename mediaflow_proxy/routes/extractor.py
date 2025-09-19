@@ -51,6 +51,9 @@ async def extract_url(
         response["query_params"]["api_password"] = request.query_params.get("api_password")
 
         if extractor_params.redirect_stream:
+            # If extractor signals disabling SSL verification, propagate via query param
+            if response.get("disable_ssl_verify"):
+                response.setdefault("query_params", {})["disable_ssl_verify"] = "1"
             stream_url = encode_mediaflow_proxy_url(
                 **response,
                 response_headers=proxy_headers.response,
