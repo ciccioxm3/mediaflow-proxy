@@ -54,10 +54,22 @@ class DLHDExtractor(BaseExtractor):
         return headers
 
     async def _make_request(self, url: str, method: str = "GET", headers: Optional[Dict] = None, **kwargs) -> Any:
-        """Override _make_request to always disable SSL verification for this extractor by creating a new client."""
+        """Override _make_request: always disable SSL verification ONLY for DLHD extractor.
+
+        No new environment variables: this is hard-coded behavior as requested.
+        Adds debug log once per process to make clear SSL verify is off for these requests.
+        """
         from mediaflow_proxy.utils.http_utils import create_httpx_client, fetch_with_retry
+        if not getattr(self, "_logged_insecure_ssl", False):
+            logger.warning("[DLHD] SSL certificate verification DISABLED for DLHD extractor requests (hard-coded).")
+            self._logged_insecure_ssl = True
+        # Force verify False at client creation for each request scope (short lived client)
         async with create_httpx_client(verify=False) as client:
-            return await fetch_with_retry(client, method, url, headers, **kwargs)
+            try:
+                return await fetch_with_retry(client, method, url, headers, **kwargs)
+            except Exception as e:
+                logger.debug(f"[DLHD] request failed (verify disabled) {method} {url}: {e}")
+                raise
 
     async def extract(self, url: str, **kwargs) -> Dict[str, Any]:
         """Extract DLHD stream URL and required headers"""
