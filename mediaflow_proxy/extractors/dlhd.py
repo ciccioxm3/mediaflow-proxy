@@ -399,6 +399,9 @@ class DLHDExtractor(BaseExtractor):
                 "destination_url": clean_m3u8_url,
                 "request_headers": stream_headers,
                 "mediaflow_endpoint": self.mediaflow_endpoint,
+                # Flag for the proxy to disable ALL SSL verification during streaming for this session
+                # (segments, playlist fetches, keys, etc.)
+                "disable_ssl_verify": True,
             }
 
         try:
